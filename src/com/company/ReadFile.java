@@ -6,13 +6,43 @@ import java.util.ArrayList;
 import java.util.Scanner; // Import the Scanner class to read text files
 
 public class ReadFile {
-    public static ArrayList<double[]> readEntries(String fileName) {
+
+    /**
+     * Convert entries ArrayList to a built-in Array
+     * @param entries entries from file
+     * @return entries array dataset
+     */
+    private static double[][] convertEntriesToArray(ArrayList<double[]> entries) {
+        double[][] converted = new double[entries.size()][4];
+
+        for (int i = 0; i < converted.length; i++)
+            for (int j = 0; j < converted[i].length; j++)
+                converted[i][j] = entries.get(i)[j];
+
+        return converted;
+    }
+
+    /**
+     * Convert outputs Array List to a built-in Array
+     * @param outputs outputs from file
+     * @return outputs array dataset
+     */
+    private static double[] convertOutputsToArray(ArrayList<Double> outputs) {
+        double [] converted = new double[outputs.size()];
+
+        for (int i = 0; i < converted.length; i++)
+            converted[i] = outputs.get(i);
+
+        return converted;
+    }
+
+    public static double[][] readFileEntries(String fileName) {
         ArrayList<double[]> entries = new ArrayList<double[]>();
-        ArrayList<String> expectedOutputs = new ArrayList<String>();
 
         try {
             File myObj = new File(fileName);
             Scanner myReader = new Scanner(myObj);
+
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
                 String[] dataSet = data.split(",");
@@ -23,11 +53,12 @@ public class ReadFile {
                     Double.parseDouble(dataSet[2]),
                     Double.parseDouble(dataSet[3]),
                 });
-
-                expectedOutputs.add( dataSet[4] );
             }
+
             myReader.close();
-            return entries;
+
+            return convertEntriesToArray(entries);
+
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
@@ -35,20 +66,24 @@ public class ReadFile {
         }
     }
 
-    public static ArrayList<Double> readExpectedOutputs(String fileName) {
+    public static double[] readFileOutputs(String fileName) {
         ArrayList<Double> expectedOutputs = new ArrayList<Double>();
 
         try {
             File myObj = new File(fileName);
             Scanner myReader = new Scanner(myObj);
+
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
-//                System.out.println(data);
                 String[] dataSet = data.split(",");
+
                 expectedOutputs.add( ReadFile.mapOutputs(dataSet[4]) );
             }
+
             myReader.close();
-            return expectedOutputs;
+
+            return convertOutputsToArray(expectedOutputs);
+
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
