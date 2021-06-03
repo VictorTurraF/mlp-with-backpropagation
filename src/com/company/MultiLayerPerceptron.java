@@ -2,10 +2,21 @@ package com.company;
 
 import java.util.Random;
 
-public class BackPropagation {
+public class MultiLayerPerceptron {
 
-    private static final int LIMIT_OF_STEPS = 10000;
+    private static final int LIMIT_OF_STEPS = 100000;
     private static final double MINIMUM_ACCEPTABLE_ERROR = 0.01;
+
+    public static final String ANSI_RESET = "\u001B[0m";
+
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_RED = "\u001B[31m";
+
+    public static final String ANSI_RED_BACKGROUND = "\u001B[41m";
+    public static final String ANSI_GREEN_BACKGROUND = "\u001B[42m";
+
+    public static final String UNICODE_CHECK = "\u2714";
+    public static final String UNICODE_FAIL = "\u2718";
 
     // Matrix with all input values
     double entries[][];
@@ -30,10 +41,18 @@ public class BackPropagation {
 
     // Vector with deltas of each neuron (H1, H1, O1)
     private double deltas[];
-    
-    public BackPropagation( double [][] entries, double[] expectedOuts ) {
+
+    private int step = 0;
+
+    private double[][] testEntries;
+    private double[] testOutputs;
+
+    public MultiLayerPerceptron(double [][] entries, double[] expectedOuts, double[][] testEntries, double[] testOutputs ) {
         this.entries = entries;
         this.expectedOutputs = expectedOuts;
+
+        this.testEntries = testEntries;
+        this.testOutputs = testOutputs;
 
         this.weightsCorrections = new double[5][5];
         this.gradients = new double[5][5];
@@ -60,8 +79,8 @@ public class BackPropagation {
     }
 
     private void calculateGradients(int inputLineIndex){
-        //cálculo dos gradientes
-        calculateDeltas(inputLineIndex); //calcula os deltas
+        // calculus of gradients
+        calculateDeltas(inputLineIndex); // calculate the deltas
         double Y0 = calculateSingleNeuronResult(0, entries[inputLineIndex]);//saída de H1
         double Y1 = calculateSingleNeuronResult(1, entries[inputLineIndex]);//saída de H2
         double Y2 = calculateSingleNeuronResult(2, entries[inputLineIndex]);//saída de H3
@@ -111,11 +130,6 @@ public class BackPropagation {
                 weights[i][j] = weights[i][j] + weightVariation;
             }
         }
-
-        System.out.print(" CORREÇÃO DOS PESOS PARA AS ENTRADAS "+entries[inputLineIndex][0]+"," +entries[inputLineIndex][1]+"\n");
-//        System.out.printf("Camada de saída: w0=%.4f , w1=%.4f, w2=%.4f \n", weights[0][2], weights[1][2], weights[2][2]);
-//        System.out.printf("Camada oculta (H2): w0=%.4f , w1=%.4f, w2=%.4f \n", weights[0][1], weights[1][1], weights[2][1]);
-//        System.out.printf("Camada oculta (H1): w0=%.4f , w1=%.4f, w2=%.4f \n", weights[0][0], weights[1][0], weights[2][0]);
     }
 
     private void generateRandomWeights() {
@@ -173,25 +187,34 @@ public class BackPropagation {
         return sum / entries.length;
     }
 
-    void submitValuesAndSeeResults() {
-        System.out.printf("\n");
+    double[] submitTests() {
 
-        for (int i = 0; i < entries.length; i++) {
-            double result = calculateNeuralNetworkResult(entries[i]);
-            System.out.printf("%.2f %.2f %.2f %.2f = %.4f\n", entries[i][0], entries[i][1], entries[i][2], entries[i][3], result);
+        double[] outputs = new double[testOutputs.length];
+
+        for (int i = 0; i < testEntries.length; i++){
+
+            outputs[i] = calculateNeuralNetworkResult(testEntries[i]);
+//            System.out.printf("%.2f %.2f %.2f %.2f = %.4f\n", testEntries[i][0], testEntries[i][1], testEntries[i][2], testEntries[i][3], outputs[i]);
+
         }
 
+        return outputs;
     }
+
+    boolean hasConverged() {
+        double meanSquareError = calculateMeanSquareError();
+
+        if(meanSquareError > MINIMUM_ACCEPTABLE_ERROR)
+            return false;
+
+        return true;
+    }
+
 
     void trainNeuralNetwork (double learningRate, double alpha) {
         double meanSquareError = calculateMeanSquareError();
-        System.out.println("Mean square error: " + meanSquareError);
 
-        int step = 0;
         while (meanSquareError > MINIMUM_ACCEPTABLE_ERROR && step < LIMIT_OF_STEPS) {
-
-            System.out.printf("\nÉpoca: %d ", step);
-            System.out.printf(" - MSE: %.10f", meanSquareError);
 
             for (int i = 0; i < entries.length; i++)
                 updateWeights(i, learningRate, alpha);
@@ -199,7 +222,58 @@ public class BackPropagation {
             meanSquareError = calculateMeanSquareError();
             step++;
         }
+    }
 
-        submitValuesAndSeeResults();
+    void generateTrainingReports() {
+        System.out.println("\n");
+        System.out.println("Total de etapas: " + step);
+        System.out.println("Convergiu? " + (hasConverged() ?
+                ANSI_GREEN_BACKGROUND + " Sim " + ANSI_RESET :
+                ANSI_RED_BACKGROUND + " Não " + ANSI_RESET ));
+
+    }
+
+    boolean isCloseTo(double value, double valueToCompare, double threshold) {
+        return Math.abs(value - valueToCompare) < threshold;
+    }
+
+    void generateTestingReports() {
+
+        double[] receivedOutputs = this.submitTests();
+
+        for (int i = 0; i < receivedOutputs.length; i++) {
+
+            System.out.printf("\n%.1f %.1f %.1f %.1f = ",
+                testEntries[i][0],
+                testEntries[i][1],
+                testEntries[i][2],
+                testEntries[i][3]
+            );
+
+            if (isCloseTo( testOutputs[i], receivedOutputs[i], 0.1)) {
+                System.out.print(ANSI_GREEN);
+            } else {
+                System.out.print(ANSI_RED);
+            }
+
+            System.out.printf("%.4f", receivedOutputs[i]);
+            System.out.print(ANSI_RESET);
+        }
+
+        int number_of_assertions = 0;
+        int number_of_fails = 0;
+
+        for (int i = 0; i < this.testOutputs.length; i++) {
+            if (isCloseTo( testOutputs[i], receivedOutputs[i], 0.1))
+                number_of_assertions++;
+            else
+                number_of_fails++;
+        }
+
+        System.out.print("\n");
+        System.out.println( ANSI_GREEN + UNICODE_CHECK + ANSI_RESET + " Acertos: " + number_of_assertions + "/" + testOutputs.length);
+        System.out.println( ANSI_RED + UNICODE_FAIL + ANSI_RESET + " Erros: " +  number_of_fails + "/" + testOutputs.length);
+
+
     }
 }
