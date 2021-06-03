@@ -7,16 +7,7 @@ public class MultiLayerPerceptron {
     private static final int LIMIT_OF_STEPS = 100000;
     private static final double MINIMUM_ACCEPTABLE_ERROR = 0.01;
 
-    public static final String ANSI_RESET = "\u001B[0m";
-
-    public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_RED = "\u001B[31m";
-
-    public static final String ANSI_RED_BACKGROUND = "\u001B[41m";
-    public static final String ANSI_GREEN_BACKGROUND = "\u001B[42m";
-
-    public static final String UNICODE_CHECK = "\u2714";
-    public static final String UNICODE_FAIL = "\u2718";
+    public String name;
 
     // Matrix with all input values
     double entries[][];
@@ -42,12 +33,23 @@ public class MultiLayerPerceptron {
     // Vector with deltas of each neuron (H1, H1, O1)
     private double deltas[];
 
-    private int step = 0;
+    public int step = 0;
+
+    public double[][] getTestEntries() {
+        return testEntries;
+    }
+
+    public double[] getTestOutputs() {
+        return testOutputs;
+    }
 
     private double[][] testEntries;
     private double[] testOutputs;
 
-    public MultiLayerPerceptron(double [][] entries, double[] expectedOuts, double[][] testEntries, double[] testOutputs ) {
+
+    public MultiLayerPerceptron(String name, double [][] entries, double[] expectedOuts, double[][] testEntries, double[] testOutputs ) {
+        this.name = name;
+
         this.entries = entries;
         this.expectedOutputs = expectedOuts;
 
@@ -194,7 +196,6 @@ public class MultiLayerPerceptron {
         for (int i = 0; i < testEntries.length; i++){
 
             outputs[i] = calculateNeuralNetworkResult(testEntries[i]);
-//            System.out.printf("%.2f %.2f %.2f %.2f = %.4f\n", testEntries[i][0], testEntries[i][1], testEntries[i][2], testEntries[i][3], outputs[i]);
 
         }
 
@@ -212,68 +213,16 @@ public class MultiLayerPerceptron {
 
 
     void trainNeuralNetwork (double learningRate, double alpha) {
-        double meanSquareError = calculateMeanSquareError();
 
-        while (meanSquareError > MINIMUM_ACCEPTABLE_ERROR && step < LIMIT_OF_STEPS) {
+        step = 0;
+
+        while (!hasConverged() && step < LIMIT_OF_STEPS) {
 
             for (int i = 0; i < entries.length; i++)
                 updateWeights(i, learningRate, alpha);
 
-            meanSquareError = calculateMeanSquareError();
             step++;
         }
     }
 
-    void generateTrainingReports() {
-        System.out.println("\n");
-        System.out.println("Total de etapas: " + step);
-        System.out.println("Convergiu? " + (hasConverged() ?
-                ANSI_GREEN_BACKGROUND + " Sim " + ANSI_RESET :
-                ANSI_RED_BACKGROUND + " Não " + ANSI_RESET ));
-
-    }
-
-    boolean isCloseTo(double value, double valueToCompare, double threshold) {
-        return Math.abs(value - valueToCompare) < threshold;
-    }
-
-    void generateTestingReports() {
-
-        double[] receivedOutputs = this.submitTests();
-
-        for (int i = 0; i < receivedOutputs.length; i++) {
-
-            System.out.printf("\n%.1f %.1f %.1f %.1f = ",
-                testEntries[i][0],
-                testEntries[i][1],
-                testEntries[i][2],
-                testEntries[i][3]
-            );
-
-            if (isCloseTo( testOutputs[i], receivedOutputs[i], 0.1)) {
-                System.out.print(ANSI_GREEN);
-            } else {
-                System.out.print(ANSI_RED);
-            }
-
-            System.out.printf("%.4f", receivedOutputs[i]);
-            System.out.print(ANSI_RESET);
-        }
-
-        int number_of_assertions = 0;
-        int number_of_fails = 0;
-
-        for (int i = 0; i < this.testOutputs.length; i++) {
-            if (isCloseTo( testOutputs[i], receivedOutputs[i], 0.1))
-                number_of_assertions++;
-            else
-                number_of_fails++;
-        }
-
-        System.out.print("\n");
-        System.out.println( ANSI_GREEN + UNICODE_CHECK + ANSI_RESET + " Acertos: " + number_of_assertions + "/" + testOutputs.length);
-        System.out.println( ANSI_RED + UNICODE_FAIL + ANSI_RESET + " Erros: " +  number_of_fails + "/" + testOutputs.length);
-
-
-    }
 }
