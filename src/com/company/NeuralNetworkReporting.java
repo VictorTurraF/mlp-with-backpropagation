@@ -48,6 +48,18 @@ public class NeuralNetworkReporting {
         return Math.abs(testOutputs[inputIndex] - receivedOutputs[inputIndex]) < threshold;
     }
 
+    public static boolean isCloseToSetosa(double value) {
+        return Math.abs(value - 0) < 0.1;
+    }
+
+    public static boolean isCloseToVirginica(double value) {
+        return Math.abs(value - 0.5) < 0.1;
+    }
+
+    public static boolean isCloseToVersicolor(double value) {
+        return Math.abs(value - 1) < 0.1;
+    }
+
     void generateTrainingReports() {
         System.out.print("\n");
         System.out.println("Total de etapas: " + numberOfSteps);
@@ -74,7 +86,13 @@ public class NeuralNetworkReporting {
                 System.out.print(ANSI_RED);
             }
 
-            System.out.printf("%.4f\n", receivedOutputs[i]);
+            System.out.printf("%.4f ", receivedOutputs[i]);
+            String flowerName = mapValuesToOutputs(receivedOutputs[i]);
+
+            if (flowerName != "")
+                System.out.printf("(%s)", flowerName );
+
+            System.out.print("\n");
             System.out.print(ANSI_RESET);
         }
 
@@ -93,7 +111,18 @@ public class NeuralNetworkReporting {
         System.out.println( UNICODE_FAIL + " Erros: " +  numberOfFails + "/" + testOutputs.length);
         System.out.print("\n");
 
+    }
 
+
+    public static String mapValuesToOutputs(double flowerValue) {
+        if(isCloseToVirginica(flowerValue))
+            return "Iris-Virginica";
+        if(isCloseToSetosa(flowerValue))
+            return "Iris-Setosa";
+        if(isCloseToVersicolor(flowerValue))
+            return "Iris-Versicolor";
+
+        return "";
     }
 
     public void log() {
